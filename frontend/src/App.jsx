@@ -12,6 +12,16 @@ function App() {
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
 
+  const loadComponents = async () => {
+    try {
+      const metadata = await api.getAllMetadata();
+      const componentsArray = Object.values(metadata);
+      setComponents(componentsArray);
+    } catch (error) {
+      console.error('Failed to load components:', error);
+    }
+  };
+
   // Load components on mount
   useEffect(() => {
     loadComponents();
@@ -26,16 +36,6 @@ function App() {
       setSelectedComponent(null);
     }
   }, [selectedId, components]);
-
-  const loadComponents = async () => {
-    try {
-      const metadata = await api.getAllMetadata();
-      const componentsArray = Object.values(metadata);
-      setComponents(componentsArray);
-    } catch (error) {
-      console.error('Failed to load components:', error);
-    }
-  };
 
   const handleUpload = async (file) => {
     try {

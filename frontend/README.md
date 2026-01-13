@@ -12,7 +12,7 @@ React-based frontend application for the piniPLM PDM/PLM system.
 
 ## Tech Stack
 
-- React 18
+- React 19
 - Vite (build tool)
 - Three.js / React Three Fiber / Drei (3D visualization)
 - Axios (HTTP client)

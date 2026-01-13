@@ -1,10 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Box, TransformControls } from '@react-three/drei';
-import * as THREE from 'three';
 
 // Component representing a 3D object
-function Component3D({ id, name, position, rotation, isSelected, onSelect, color }) {
+function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
 
@@ -45,7 +44,7 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
   useEffect(() => {
     if (transformRef.current && groupRef.current) {
       const controls = transformRef.current;
-      const callback = (event) => {
+      const callback = () => {
         if (groupRef.current) {
           const newPosition = {
             x: groupRef.current.position.x,
@@ -77,8 +76,6 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
 
 // Main 3D Viewer component
 export default function Viewer3D({ components, selectedId, onSelectComponent, onTransformEnd }) {
-  const [transformMode, setTransformMode] = useState('translate');
-
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
