@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: piniplm-backend-dev
+    ports:
+      - "2024:2024"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend-uploads:/app/uploads
+      - backend-data:/app/data
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - piniplm-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: piniplm-frontend-dev
+    ports:
+      - "2020:2020"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - piniplm-network
+
+volumes:
+  backend-uploads:
+  backend-data:
+
+networks:
+  piniplm-network:
+    driver: bridge

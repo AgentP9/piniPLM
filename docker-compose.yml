@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: piniplm-backend
+    ports:
+      - "2024:2024"
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-data:/app/data
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - piniplm-network
+
+  frontend:
+    build: ./frontend
+    container_name: piniplm-frontend
+    ports:
+      - "2020:2020"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - piniplm-network
+
+volumes:
+  backend-uploads:
+  backend-data:
+
+networks:
+  piniplm-network:
+    driver: bridge

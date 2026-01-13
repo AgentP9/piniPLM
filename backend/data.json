@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "id": "3998414a-c39a-4532-9c70-fe03d498f7a5",
+      "originalName": "test-cube.obj",
+      "filename": "06e9aa7c-b45d-427f-b02c-d3a01dad89bb.obj",
+      "path": "/home/runner/work/piniPLM/piniPLM/backend/uploads/06e9aa7c-b45d-427f-b02c-d3a01dad89bb.obj",
+      "size": 232,
+      "uploadedAt": "2026-01-13T13:18:57.509Z"
+    }
+  ],
+  "metadata": {
+    "3998414a-c39a-4532-9c70-fe03d498f7a5": {
+      "id": "3998414a-c39a-4532-9c70-fe03d498f7a5",
+      "name": "test-cube",
+      "nomenclature": "TEST-COMPONENT",
+      "description": "",
+      "partNumber": "PN-99999",
+      "revision": "1",
+      "material": "",
+      "weight": "",
+      "cost": "",
+      "supplier": "",
+      "status": "Draft",
+      "createdAt": "2026-01-13T13:18:57.509Z",
+      "modifiedAt": "2026-01-13T13:20:52.947Z",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "children": []
+    }
+  }
+}
