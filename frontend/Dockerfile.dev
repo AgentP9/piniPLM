@@ -11,11 +11,8 @@ RUN npm install
 # Copy application files
 COPY . .
 
-# Create uploads and data directories
-RUN mkdir -p uploads data
-
 # Expose port
-EXPOSE 2024
+EXPOSE 2020
 
-# Start the server
-CMD ["npm", "start"]
+# Start the dev server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

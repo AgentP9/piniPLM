@@ -28,6 +28,8 @@ Both services are containerized using Docker for easy deployment.
 
 ## Quick Start
 
+### Production Deployment
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/AgentP9/piniPLM.git
@@ -42,6 +44,16 @@ docker-compose up --build
 3. Access the application:
    - Frontend: http://localhost:2020
    - Backend API: http://localhost:2024
+
+### Development Mode (with hot-reload)
+
+For development with automatic code reloading:
+
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+This will mount your local source code into the containers and enable hot-reload for both frontend and backend.
 
 ## Usage
 

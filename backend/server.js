@@ -18,6 +18,12 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Ensure data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -49,7 +55,7 @@ let dataStore = {
 };
 
 // Load data from file if exists
-const dataFile = path.join(__dirname, 'data.json');
+const dataFile = path.join(__dirname, 'data', 'data.json');
 if (fs.existsSync(dataFile)) {
   try {
     const data = fs.readFileSync(dataFile, 'utf8');

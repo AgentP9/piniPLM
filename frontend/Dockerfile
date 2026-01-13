@@ -11,8 +11,14 @@ RUN npm install
 # Copy application files
 COPY . .
 
+# Build the application
+RUN npm run build
+
+# Install serve to run the production build
+RUN npm install -g serve
+
 # Expose port
 EXPOSE 2020
 
-# Start the dev server
-CMD ["npm", "run", "dev"]
+# Start the production server
+CMD ["serve", "-s", "dist", "-l", "2020"]
