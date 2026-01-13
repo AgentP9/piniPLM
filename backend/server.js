@@ -9,7 +9,10 @@ const app = express();
 const PORT = 2024;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true, // Allow all origins for development
+  credentials: true
+}));
 app.use(express.json());
 
 // Ensure uploads directory exists

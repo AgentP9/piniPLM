@@ -55,6 +55,20 @@ docker-compose -f docker-compose.dev.yml up --build
 
 This will mount your local source code into the containers and enable hot-reload for both frontend and backend.
 
+### Network Access
+
+The application automatically detects the hostname and configures the API URL accordingly:
+- When accessing via `localhost`, it uses `http://localhost:2024`
+- When accessing via a network hostname (e.g., `http://hostname:2020`), it uses `http://hostname:2024`
+
+This allows the application to work seamlessly whether accessed locally or over a network.
+
+If you need to override the API URL, you can set the `VITE_API_URL` environment variable before building:
+```bash
+export VITE_API_URL=http://your-backend-host:2024
+docker-compose up --build
+```
+
 ## Usage
 
 1. **Upload a File**: Click the "Upload File" button and select a JT file (or other supported 3D format)

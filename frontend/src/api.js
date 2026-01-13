@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2024';
+// Use relative URL for API calls when in production (same host)
+// or allow override via environment variable
+const API_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? `http://${window.location.hostname}:2024`
+  : (import.meta.env.VITE_API_URL || 'http://localhost:2024');
 
 export const api = {
   // Upload file

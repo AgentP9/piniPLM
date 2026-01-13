@@ -20,8 +20,6 @@ services:
     container_name: piniplm-frontend
     ports:
       - "2020:2020"
-    environment:
-      - VITE_API_URL=http://localhost:2024
     depends_on:
       - backend
     restart: unless-stopped
