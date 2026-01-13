@@ -11,6 +11,7 @@ function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [currentView, setCurrentView] = useState('geometry'); // 'geometry', 'metadata', 'structure'
 
   const loadComponents = async () => {
     try {
@@ -82,17 +83,60 @@ function App() {
     }
   };
 
+  const handleAddChild = async (parentId, childId) => {
+    try {
+      await api.addChildPart(parentId, childId, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
+      await loadComponents();
+      alert('Child part added successfully!');
+    } catch (error) {
+      console.error('Failed to add child:', error);
+      alert('Failed to add child: ' + error.message);
+    }
+  };
+
+  const handleRemoveChild = async (parentId, childId) => {
+    try {
+      await api.removeChildPart(parentId, childId);
+      await loadComponents();
+      alert('Child part removed successfully!');
+    } catch (error) {
+      console.error('Failed to remove child:', error);
+      alert('Failed to remove child: ' + error.message);
+    }
+  };
+
+  const handleReplaceChild = async (parentId, oldChildId, newChildId) => {
+    try {
+      await api.replaceChildPart(parentId, oldChildId, newChildId);
+      await loadComponents();
+      alert('Child part replaced successfully!');
+    } catch (error) {
+      console.error('Failed to replace child:', error);
+      alert('Failed to replace child: ' + error.message);
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-content">
           <h1>🔧 piniPLM - Product Lifecycle Management</h1>
-          <button
-            className="upload-button"
-            onClick={() => setShowUpload(!showUpload)}
-          >
-            {showUpload ? 'Close Upload' : 'Upload File'}
-          </button>
+          <div className="header-controls">
+            <div className="view-selector">
+              <label>View:</label>
+              <select value={currentView} onChange={(e) => setCurrentView(e.target.value)}>
+                <option value="geometry">Geometry View</option>
+                <option value="metadata">Meta Data View</option>
+                <option value="structure">Structure View</option>
+              </select>
+            </div>
+            <button
+              className="upload-button"
+              onClick={() => setShowUpload(!showUpload)}
+            >
+              {showUpload ? 'Close Upload' : 'Upload File'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -108,16 +152,33 @@ function App() {
             components={components}
             selectedId={selectedId}
             onSelect={handleSelectComponent}
+            onAddChild={handleAddChild}
+            onRemoveChild={handleRemoveChild}
+            onReplaceChild={handleReplaceChild}
           />
         </div>
 
         <div className="center-panel">
-          <Viewer3D
-            components={components}
-            selectedId={selectedId}
-            onSelectComponent={handleSelectComponent}
-            onTransformEnd={handleTransformEnd}
-          />
+          {currentView === 'geometry' ? (
+            <Viewer3D
+              components={components}
+              selectedId={selectedId}
+              onSelectComponent={handleSelectComponent}
+              onTransformEnd={handleTransformEnd}
+            />
+          ) : currentView === 'metadata' ? (
+            <div className="view-placeholder">
+              <h2>Meta Data View</h2>
+              <p>Displays detailed metadata and properties for components</p>
+              <p>Use the Properties panel on the right to edit metadata</p>
+            </div>
+          ) : (
+            <div className="view-placeholder">
+              <h2>Structure View</h2>
+              <p>Displays the product structure and assembly relationships</p>
+              <p>Shows parent-child relationships and hierarchical organization</p>
+            </div>
+          )}
         </div>
 
         <div className="right-panel">

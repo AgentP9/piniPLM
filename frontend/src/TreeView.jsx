@@ -1,50 +1,134 @@
 import React, { useState } from 'react';
 import './TreeView.css';
 
-function TreeNode({ node, selectedId, onSelect, level = 0 }) {
+function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRemoveChild, onReplaceChild, level = 0 }) {
   const [expanded, setExpanded] = useState(true);
+  const [showActions, setShowActions] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
+
+  const handleAddChild = (childId) => {
+    if (onAddChild) {
+      onAddChild(node.id, childId);
+    }
+  };
+
+  const handleRemoveChild = (childId) => {
+    if (onRemoveChild) {
+      onRemoveChild(node.id, childId);
+    }
+  };
 
   return (
     <div className="tree-node">
       <div
         className={`tree-node-content ${node.id === selectedId ? 'selected' : ''}`}
         style={{ paddingLeft: `${level * 20 + 10}px` }}
-        onClick={() => onSelect(node.id)}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
       >
-        {hasChildren && (
-          <span
-            className="tree-node-toggle"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
-          >
-            {expanded ? '▼' : '▶'}
-          </span>
+        <span onClick={() => onSelect(node.id)} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          {hasChildren && (
+            <span
+              className="tree-node-toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+            >
+              {expanded ? '▼' : '▶'}
+            </span>
+          )}
+          {!hasChildren && <span className="tree-node-spacer">•</span>}
+          <span className="tree-node-icon">📦</span>
+          <span className="tree-node-label">{node.name}</span>
+        </span>
+        {showActions && (
+          <div className="tree-node-actions">
+            <button
+              className="tree-action-btn"
+              title="Add Child Part"
+              onClick={(e) => {
+                e.stopPropagation();
+                const childId = prompt('Enter child part ID to add (available parts will be shown):\n\n' + 
+                  allComponents.map(c => `${c.name} (${c.id})`).join('\n'));
+                if (childId) handleAddChild(childId);
+              }}
+            >
+              ➕
+            </button>
+          </div>
         )}
-        {!hasChildren && <span className="tree-node-spacer">•</span>}
-        <span className="tree-node-icon">📦</span>
-        <span className="tree-node-label">{node.name}</span>
       </div>
       {hasChildren && expanded && (
         <div className="tree-node-children">
-          {node.children.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              level={level + 1}
-            />
-          ))}
+          {node.children.map((child) => {
+            // Find the full child metadata
+            const childMetadata = allComponents.find(c => c.id === child.id);
+            if (!childMetadata) return null;
+            
+            // Merge relationship data with child metadata
+            const childWithRelation = {
+              ...childMetadata,
+              relationPosition: child.position,
+              relationRotation: child.rotation
+            };
+            
+            return (
+              <div key={child.id} style={{ position: 'relative' }}>
+                <TreeNode
+                  node={childWithRelation}
+                  allComponents={allComponents}
+                  selectedId={selectedId}
+                  onSelect={onSelect}
+                  onAddChild={onAddChild}
+                  onRemoveChild={onRemoveChild}
+                  onReplaceChild={onReplaceChild}
+                  level={level + 1}
+                />
+                <button
+                  className="tree-remove-btn"
+                  title="Remove from parent"
+                  style={{ 
+                    position: 'absolute',
+                    right: '5px',
+                    top: '5px',
+                    fontSize: '10px',
+                    padding: '2px 5px'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Remove ${childMetadata.name} from ${node.name}?`)) {
+                      handleRemoveChild(child.id);
+                    }
+                  }}
+                >
+                  ✖
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-export default function TreeView({ components, selectedId, onSelect }) {
+export default function TreeView({ components, selectedId, onSelect, onAddChild, onRemoveChild, onReplaceChild }) {
+  // Build hierarchical structure: only show root-level components
+  // (components that are not children of any other component)
+  const getAllChildIds = (comps) => {
+    const childIds = new Set();
+    comps.forEach(comp => {
+      if (comp.children && comp.children.length > 0) {
+        comp.children.forEach(child => childIds.add(child.id));
+      }
+    });
+    return childIds;
+  };
+
+  const childIds = getAllChildIds(components);
+  const rootComponents = components.filter(comp => !childIds.has(comp.id));
+
   return (
     <div className="tree-view">
       <div className="tree-view-header">
@@ -56,12 +140,16 @@ export default function TreeView({ components, selectedId, onSelect }) {
             No components loaded. Upload a JT file to get started.
           </div>
         ) : (
-          components.map((component) => (
+          rootComponents.map((component) => (
             <TreeNode
               key={component.id}
               node={component}
+              allComponents={components}
               selectedId={selectedId}
               onSelect={onSelect}
+              onAddChild={onAddChild}
+              onRemoveChild={onRemoveChild}
+              onReplaceChild={onReplaceChild}
             />
           ))
         )}

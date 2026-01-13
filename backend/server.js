@@ -190,6 +190,140 @@ app.put('/api/transform/:id', (req, res) => {
   res.json(dataStore.metadata[id]);
 });
 
+// Add child part to parent part
+app.post('/api/parts/:parentId/children', (req, res) => {
+  const parentId = req.params.parentId;
+  const { childId, position, rotation } = req.body;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[childId]) {
+    return res.status(404).json({ error: 'Child part not found' });
+  }
+
+  // Initialize children array if not exists
+  if (!dataStore.metadata[parentId].children) {
+    dataStore.metadata[parentId].children = [];
+  }
+
+  // Check if child already exists
+  const existingIndex = dataStore.metadata[parentId].children.findIndex(
+    c => c.id === childId
+  );
+  
+  if (existingIndex !== -1) {
+    return res.status(400).json({ error: 'Child already exists in parent' });
+  }
+
+  // Add child with relationship data
+  dataStore.metadata[parentId].children.push({
+    id: childId,
+    position: position || { x: 0, y: 0, z: 0 },
+    rotation: rotation || { x: 0, y: 0, z: 0 }
+  });
+
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
+// Remove child part from parent part
+app.delete('/api/parts/:parentId/children/:childId', (req, res) => {
+  const { parentId, childId } = req.params;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[parentId].children) {
+    return res.status(404).json({ error: 'No children found' });
+  }
+
+  const childIndex = dataStore.metadata[parentId].children.findIndex(
+    c => c.id === childId
+  );
+
+  if (childIndex === -1) {
+    return res.status(404).json({ error: 'Child not found in parent' });
+  }
+
+  dataStore.metadata[parentId].children.splice(childIndex, 1);
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
+// Replace child part in parent part
+app.put('/api/parts/:parentId/children/:oldChildId', (req, res) => {
+  const { parentId, oldChildId } = req.params;
+  const { newChildId, position, rotation } = req.body;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[newChildId]) {
+    return res.status(404).json({ error: 'New child part not found' });
+  }
+
+  if (!dataStore.metadata[parentId].children) {
+    return res.status(404).json({ error: 'No children found' });
+  }
+
+  const childIndex = dataStore.metadata[parentId].children.findIndex(
+    c => c.id === oldChildId
+  );
+
+  if (childIndex === -1) {
+    return res.status(404).json({ error: 'Old child not found in parent' });
+  }
+
+  // Replace the child while preserving or updating position/rotation
+  dataStore.metadata[parentId].children[childIndex] = {
+    id: newChildId,
+    position: position || dataStore.metadata[parentId].children[childIndex].position,
+    rotation: rotation || dataStore.metadata[parentId].children[childIndex].rotation
+  };
+
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
+// Update child relationship data (position/rotation on the relation)
+app.put('/api/parts/:parentId/children/:childId/relation', (req, res) => {
+  const { parentId, childId } = req.params;
+  const { position, rotation } = req.body;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[parentId].children) {
+    return res.status(404).json({ error: 'No children found' });
+  }
+
+  const child = dataStore.metadata[parentId].children.find(c => c.id === childId);
+
+  if (!child) {
+    return res.status(404).json({ error: 'Child not found in parent' });
+  }
+
+  if (position) {
+    child.position = position;
+  }
+
+  if (rotation) {
+    child.rotation = rotation;
+  }
+
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
 // Delete file and metadata
 app.delete('/api/files/:id', (req, res) => {
   const id = req.params.id;
