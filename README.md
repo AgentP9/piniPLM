@@ -90,7 +90,7 @@ The frontend will start on http://localhost:2020
 ## Technology Stack
 
 ### Frontend
-- React 18
+- React 19
 - Vite
 - Three.js / React Three Fiber
 - Axios
@@ -100,6 +100,20 @@ The frontend will start on http://localhost:2020
 - Express
 - Multer (file uploads)
 - CORS
+
+## Production Considerations
+
+This is an initial setup intended for development and demonstration purposes. For production deployment, consider adding:
+
+- Rate limiting on API endpoints
+- Authentication and authorization
+- Input validation and sanitization
+- Database (PostgreSQL, MongoDB) instead of JSON file storage
+- File size limits and validation
+- Error logging and monitoring
+- HTTPS/TLS encryption
+- Backup and recovery mechanisms
+- Load balancing and scaling strategies
 
 ## License
 
