@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: piniplm-backend
+    ports:
+      - "2024:2024"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend-uploads:/app/uploads
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - piniplm-network
+
+  frontend:
+    build: ./frontend
+    container_name: piniplm-frontend
+    ports:
+      - "2020:2020"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:2024
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - piniplm-network
+
+volumes:
+  backend-uploads:
+
+networks:
+  piniplm-network:
+    driver: bridge
