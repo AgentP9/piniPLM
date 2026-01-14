@@ -6,28 +6,39 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 import { API_URL, getMaterialProps } from './renderUtils';
+import ErrorBoundary from './ErrorBoundary';
 
 // Component to load and display OBJ files
 function OBJModel({ url, color, isSelected, hovered }) {
-  const obj = useLoader(OBJLoader, url);
+  const obj = useLoader(OBJLoader, url, 
+    undefined, // onProgress
+    undefined, // onLoad
+    (error) => {
+      console.error('Failed to load OBJ file:', url, error);
+    }
+  );
   const groupRef = useRef();
   const materialProps = useMemo(() => getMaterialProps(color, isSelected, hovered), [color, isSelected, hovered]);
 
   useEffect(() => {
-    if (obj && groupRef.current) {
-      // Center the model
-      const box = new THREE.Box3().setFromObject(obj);
-      const center = box.getCenter(new THREE.Vector3());
-      obj.position.set(-center.x, -center.y, -center.z);
+    if (obj) {
+      console.log('OBJ loaded successfully:', url);
+      
+      if (groupRef.current) {
+        // Center the model
+        const box = new THREE.Box3().setFromObject(obj);
+        const center = box.getCenter(new THREE.Vector3());
+        obj.position.set(-center.x, -center.y, -center.z);
 
-      // Apply material to all meshes
-      obj.traverse((child) => {
-        if (child.isMesh) {
-          child.material = new THREE.MeshStandardMaterial(materialProps);
-        }
-      });
+        // Apply material to all meshes
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            child.material = new THREE.MeshStandardMaterial(materialProps);
+          }
+        });
+      }
     }
-  }, [obj, materialProps]);
+  }, [obj, materialProps, url]);
 
   return <primitive ref={groupRef} object={obj} />;
 }
@@ -87,6 +98,7 @@ function FallbackBox({ color, isSelected, hovered }) {
 export default function Model3D({ filename, color, isSelected, hovered }) {
   if (!filename) {
     // No file, use fallback box
+    console.warn('No filename provided, using fallback box');
     return <FallbackBox color={color} isSelected={isSelected} hovered={hovered} />;
   }
 
@@ -94,42 +106,51 @@ export default function Model3D({ filename, color, isSelected, hovered }) {
   const extension = filename ? filename.split('.').pop().toLowerCase() : '';
 
   if (!extension) {
+    console.warn('No file extension found for:', filename);
     return <FallbackBox color={color} isSelected={isSelected} hovered={hovered} />;
   }
+
+  console.log('Loading 3D model:', { filename, extension, fileUrl });
 
   // Select appropriate loader based on file extension
   if (extension === 'obj') {
     return (
-      <Suspense fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
-        <OBJModel 
-          url={fileUrl} 
-          color={color} 
-          isSelected={isSelected} 
-          hovered={hovered}
-        />
-      </Suspense>
+      <ErrorBoundary fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
+        <Suspense fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
+          <OBJModel 
+            url={fileUrl} 
+            color={color} 
+            isSelected={isSelected} 
+            hovered={hovered}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   } else if (extension === 'stl') {
     return (
-      <Suspense fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
-        <STLModel 
-          url={fileUrl} 
-          color={color} 
-          isSelected={isSelected} 
-          hovered={hovered}
-        />
-      </Suspense>
+      <ErrorBoundary fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
+        <Suspense fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
+          <STLModel 
+            url={fileUrl} 
+            color={color} 
+            isSelected={isSelected} 
+            hovered={hovered}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   } else if (extension === 'gltf' || extension === 'glb') {
     return (
-      <Suspense fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
-        <GLTFModel 
-          url={fileUrl} 
-          color={color} 
-          isSelected={isSelected} 
-          hovered={hovered}
-        />
-      </Suspense>
+      <ErrorBoundary fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
+        <Suspense fallback={<FallbackBox color={color} isSelected={isSelected} hovered={hovered} />}>
+          <GLTFModel 
+            url={fileUrl} 
+            color={color} 
+            isSelected={isSelected} 
+            hovered={hovered}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   } else if (extension === 'jt') {
     // JT format is not supported by Three.js
@@ -138,6 +159,7 @@ export default function Model3D({ filename, color, isSelected, hovered }) {
     return <FallbackBox color={color} isSelected={isSelected} hovered={hovered} />;
   } else {
     // Unknown format, use fallback
+    console.warn('Unknown file format:', extension);
     return <FallbackBox color={color} isSelected={isSelected} hovered={hovered} />;
   }
 }
