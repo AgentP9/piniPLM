@@ -41,7 +41,7 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
       >
-        <span onClick={() => onSelect(node.id)} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+        <span onClick={() => onSelect(node.instanceId || node.id)} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           {hasChildren && (
             <span
               className="tree-node-toggle"

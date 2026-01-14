@@ -75,7 +75,7 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
 }
 
 // Main 3D Viewer component
-export default function Viewer3D({ components, selectedId, onSelectComponent, onTransformEnd }) {
+export default function Viewer3D({ instances = [], selectedId, onSelectComponent, onTransformEnd }) {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
@@ -89,24 +89,24 @@ export default function Viewer3D({ components, selectedId, onSelectComponent, on
         {/* Grid helper */}
         <gridHelper args={[20, 20, '#444444', '#222222']} />
         
-        {/* Render components */}
-        {components.map((comp) => {
+        {/* Render all instances (root parts and child instances) */}
+        {instances.map((instance) => {
           const pos = [
-            comp.position?.x || 0,
-            comp.position?.y || 0,
-            comp.position?.z || 0,
+            instance.position?.x || 0,
+            instance.position?.y || 0,
+            instance.position?.z || 0,
           ];
           const rot = [
-            comp.rotation?.x || 0,
-            comp.rotation?.y || 0,
-            comp.rotation?.z || 0,
+            instance.rotation?.x || 0,
+            instance.rotation?.y || 0,
+            instance.rotation?.z || 0,
           ];
           
-          if (comp.id === selectedId && onTransformEnd) {
+          if (instance.renderKey === selectedId && onTransformEnd) {
             return (
               <TransformableComponent
-                key={comp.id}
-                id={comp.id}
+                key={instance.renderKey}
+                id={instance.renderKey}
                 position={pos}
                 rotation={rot}
                 isSelected={true}
@@ -117,14 +117,14 @@ export default function Viewer3D({ components, selectedId, onSelectComponent, on
           
           return (
             <Component3D
-              key={comp.id}
-              id={comp.id}
-              name={comp.name}
+              key={instance.renderKey}
+              id={instance.renderKey}
+              name={instance.displayName}
               position={pos}
               rotation={rot}
-              isSelected={comp.id === selectedId}
+              isSelected={instance.renderKey === selectedId}
               onSelect={onSelectComponent}
-              color={comp.color || '#4dabf7'}
+              color={instance.color || '#4dabf7'}
             />
           );
         })}

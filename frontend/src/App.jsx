@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import TreeView from './TreeView';
 import ContentView from './ContentView';
@@ -8,7 +8,7 @@ import { api } from './api';
 
 function App() {
   const [components, setComponents] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(null); // Can be part ID or instanceId
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [currentView, setCurrentView] = useState('geometry'); // 'geometry', 'metadata', 'structure'
@@ -28,15 +28,93 @@ function App() {
     loadComponents();
   }, []);
 
+  // Build a flat list of all instances (root parts + all child instances)
+  // Each instance has a unique renderKey for selection
+  const getAllInstances = useCallback(() => {
+    const instances = [];
+    
+    const processComponent = (comp, parentId = null, relationData = null) => {
+      // For root components, use the part ID as the render key
+      // For child instances, use the instanceId as the render key
+      const renderKey = relationData?.instanceId || comp.id;
+      
+      instances.push({
+        renderKey,
+        id: comp.id,
+        instanceId: relationData?.instanceId,
+        name: comp.name,
+        displayName: comp.displayName || comp.name,
+        position: relationData?.position || comp.position,
+        rotation: relationData?.rotation || comp.rotation,
+        color: comp.color,
+        isChildInstance: !!relationData,
+        parentId
+      });
+      
+      // Process children recursively
+      if (comp.children && comp.children.length > 0) {
+        comp.children.forEach(child => {
+          const childComp = components.find(c => c.id === child.id);
+          if (childComp) {
+            // Count instances to determine display name
+            const samePartInstances = comp.children.filter(c => c.id === child.id);
+            const instanceNumber = samePartInstances.findIndex(c => c.instanceId === child.instanceId) + 1;
+            const showInstanceNumber = samePartInstances.length > 1;
+            
+            const childWithDisplayName = {
+              ...childComp,
+              displayName: showInstanceNumber ? `${childComp.name} [${instanceNumber}]` : childComp.name
+            };
+            
+            processComponent(childWithDisplayName, comp.id, child);
+          }
+        });
+      }
+    };
+    
+    // Get root components (not children of any other component)
+    const getAllChildIds = () => {
+      const childIds = new Set();
+      components.forEach(comp => {
+        if (comp.children && comp.children.length > 0) {
+          comp.children.forEach(child => childIds.add(child.id));
+        }
+      });
+      return childIds;
+    };
+    
+    const childIds = getAllChildIds();
+    const rootComponents = components.filter(comp => !childIds.has(comp.id));
+    
+    rootComponents.forEach(comp => processComponent(comp));
+    
+    return instances;
+  }, [components]);
+
   // Update selected component when selection changes
   useEffect(() => {
     if (selectedId) {
-      const comp = components.find((c) => c.id === selectedId);
-      setSelectedComponent(comp || null);
+      const allInstances = getAllInstances();
+      const instance = allInstances.find(inst => inst.renderKey === selectedId);
+      if (instance) {
+        // For child instances, we want to show the actual part metadata
+        // but with the instance-specific position/rotation
+        const baseComp = components.find(c => c.id === instance.id);
+        setSelectedComponent({
+          ...baseComp,
+          ...instance,
+          // Keep the base component data but override with instance-specific data
+          position: instance.position,
+          rotation: instance.rotation,
+          displayName: instance.displayName
+        });
+      } else {
+        setSelectedComponent(null);
+      }
     } else {
       setSelectedComponent(null);
     }
-  }, [selectedId, components]);
+  }, [selectedId, components, getAllInstances]);
 
   const handleUpload = async (file) => {
     try {
@@ -74,9 +152,22 @@ function App() {
     }
   };
 
-  const handleTransformEnd = async (id, position, rotation) => {
+  const handleTransformEnd = async (renderKey, position, rotation) => {
     try {
-      await api.updateTransform(id, { position, rotation });
+      // Find the instance to determine if it's a root part or child instance
+      const allInstances = getAllInstances();
+      const instance = allInstances.find(inst => inst.renderKey === renderKey);
+      
+      if (!instance) return;
+      
+      if (instance.isChildInstance) {
+        // For child instances, update the relationship data
+        await api.updateChildRelation(instance.parentId, instance.instanceId, position, rotation);
+      } else {
+        // For root parts, update the part's transform
+        await api.updateTransform(instance.id, { position, rotation });
+      }
+      
       await loadComponents();
     } catch (error) {
       console.error('Failed to update transform:', error);
@@ -161,7 +252,7 @@ function App() {
         <div className="center-panel">
           {currentView === 'geometry' ? (
             <Viewer3D
-              components={components}
+              instances={getAllInstances()}
               selectedId={selectedId}
               onSelectComponent={handleSelectComponent}
               onTransformEnd={handleTransformEnd}

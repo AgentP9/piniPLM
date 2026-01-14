@@ -31,7 +31,7 @@
       "supplier": "",
       "status": "Draft",
       "createdAt": "2026-01-13T21:29:22.336Z",
-      "modifiedAt": "2026-01-14T07:28:23.652Z",
+      "modifiedAt": "2026-01-14T07:54:54.664Z",
       "position": {
         "x": 0,
         "y": 0,
@@ -56,6 +56,20 @@
             "z": 0
           },
           "instanceId": "3706b3b7-f965-4680-bd40-f86b6d4d7e1f"
+        },
+        {
+          "instanceId": "d4996666-badc-47eb-82c7-6c8c3998adf5",
+          "id": "56424f9d-f6ca-40c5-b133-91c032e35439",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
         }
       ]
     },
