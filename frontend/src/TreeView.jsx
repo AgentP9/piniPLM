@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import './TreeView.css';
+import PartSelector from './PartSelector';
 
 function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRemoveChild, onReplaceChild, level = 0 }) {
   const [expanded, setExpanded] = useState(true);
   const [showActions, setShowActions] = useState(false);
+  const [showPartSelector, setShowPartSelector] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
 
   const handleAddChild = (childId) => {
@@ -18,8 +20,21 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
     }
   };
 
+  const handlePartSelect = (part) => {
+    handleAddChild(part.id);
+    setShowPartSelector(false);
+  };
+
   return (
     <div className="tree-node">
+      {showPartSelector && (
+        <PartSelector
+          parts={allComponents}
+          onSelect={handlePartSelect}
+          onCancel={() => setShowPartSelector(false)}
+          excludeIds={[node.id]}
+        />
+      )}
       <div
         className={`tree-node-content ${node.id === selectedId ? 'selected' : ''}`}
         style={{ paddingLeft: `${level * 20 + 10}px` }}
@@ -49,17 +64,7 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
               title="Add Child Part"
               onClick={(e) => {
                 e.stopPropagation();
-                const input = prompt('Enter child part name or ID to add (available parts will be shown):\n\n' + 
-                  allComponents.map(c => `${c.name} (${c.id})`).join('\n'));
-                if (input) {
-                  // Try to find by name first, then by ID
-                  const childPart = allComponents.find(c => c.name === input || c.id === input);
-                  if (childPart) {
-                    handleAddChild(childPart.id);
-                  } else {
-                    alert(`Part "${input}" not found. Please enter a valid part name or ID.`);
-                  }
-                }
+                setShowPartSelector(true);
               }}
             >
               ➕
