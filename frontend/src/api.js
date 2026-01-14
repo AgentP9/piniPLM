@@ -73,16 +73,16 @@ export const api = {
   },
 
   // Remove child part from parent
-  removeChildPart: async (parentId, childId) => {
-    const response = await fetch(`${API_URL}/api/parts/${parentId}/children/${childId}`, {
+  removeChildPart: async (parentId, instanceId) => {
+    const response = await fetch(`${API_URL}/api/parts/${parentId}/children/${instanceId}`, {
       method: 'DELETE',
     });
     return response.json();
   },
 
   // Replace child part in parent
-  replaceChildPart: async (parentId, oldChildId, newChildId, position, rotation) => {
-    const response = await fetch(`${API_URL}/api/parts/${parentId}/children/${oldChildId}`, {
+  replaceChildPart: async (parentId, instanceId, newChildId, position, rotation) => {
+    const response = await fetch(`${API_URL}/api/parts/${parentId}/children/${instanceId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newChildId, position, rotation }),
@@ -91,8 +91,8 @@ export const api = {
   },
 
   // Update child relationship data
-  updateChildRelation: async (parentId, childId, position, rotation) => {
-    const response = await fetch(`${API_URL}/api/parts/${parentId}/children/${childId}/relation`, {
+  updateChildRelation: async (parentId, instanceId, position, rotation) => {
+    const response = await fetch(`${API_URL}/api/parts/${parentId}/children/${instanceId}/relation`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ position, rotation }),

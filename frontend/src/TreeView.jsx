@@ -55,7 +55,7 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
           )}
           {!hasChildren && <span className="tree-node-spacer">•</span>}
           <span className="tree-node-icon">📦</span>
-          <span className="tree-node-label">{node.name}</span>
+          <span className="tree-node-label">{node.displayName || node.name}</span>
         </span>
         {showActions && (
           <div className="tree-node-actions">
@@ -79,15 +79,22 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
             const childMetadata = allComponents.find(c => c.id === child.id);
             if (!childMetadata) return null;
             
+            // Count instances of the same part to show instance number
+            const samePartInstances = node.children.filter(c => c.id === child.id);
+            const instanceNumber = samePartInstances.findIndex(c => c.instanceId === child.instanceId) + 1;
+            const showInstanceNumber = samePartInstances.length > 1;
+            
             // Merge relationship data with child metadata
             const childWithRelation = {
               ...childMetadata,
+              instanceId: child.instanceId,
+              displayName: showInstanceNumber ? `${childMetadata.name} [${instanceNumber}]` : childMetadata.name,
               relationPosition: child.position,
               relationRotation: child.rotation
             };
             
             return (
-              <div key={child.id} style={{ position: 'relative' }}>
+              <div key={child.instanceId} style={{ position: 'relative' }}>
                 <TreeNode
                   node={childWithRelation}
                   allComponents={allComponents}
@@ -110,8 +117,8 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`Remove ${childMetadata.name} from ${node.name}?`)) {
-                      handleRemoveChild(child.id);
+                    if (confirm(`Remove ${childWithRelation.displayName} from ${node.name}?`)) {
+                      handleRemoveChild(child.instanceId);
                     }
                   }}
                 >

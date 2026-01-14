@@ -63,6 +63,20 @@ if (fs.existsSync(dataFile)) {
   try {
     const data = fs.readFileSync(dataFile, 'utf8');
     dataStore = JSON.parse(data);
+    
+    // Migration: Add instanceId to existing children that don't have one
+    Object.values(dataStore.metadata).forEach(part => {
+      if (part.children && part.children.length > 0) {
+        part.children.forEach(child => {
+          if (!child.instanceId) {
+            child.instanceId = uuidv4();
+          }
+        });
+      }
+    });
+    
+    // Save migrated data
+    saveData();
   } catch (error) {
     console.error('Error loading data:', error);
   }
@@ -208,17 +222,11 @@ app.post('/api/parts/:parentId/children', (req, res) => {
     dataStore.metadata[parentId].children = [];
   }
 
-  // Check if child already exists
-  const existingIndex = dataStore.metadata[parentId].children.findIndex(
-    c => c.id === childId
-  );
-  
-  if (existingIndex !== -1) {
-    return res.status(400).json({ error: 'Child already exists in parent' });
-  }
-
-  // Add child with relationship data
+  // Add child with relationship data and unique instance ID
+  // Multiple instances of the same part are allowed
+  const instanceId = uuidv4();
   dataStore.metadata[parentId].children.push({
+    instanceId: instanceId,
     id: childId,
     position: position || { x: 0, y: 0, z: 0 },
     rotation: rotation || { x: 0, y: 0, z: 0 }
@@ -230,8 +238,8 @@ app.post('/api/parts/:parentId/children', (req, res) => {
 });
 
 // Remove child part from parent part
-app.delete('/api/parts/:parentId/children/:childId', (req, res) => {
-  const { parentId, childId } = req.params;
+app.delete('/api/parts/:parentId/children/:instanceId', (req, res) => {
+  const { parentId, instanceId } = req.params;
 
   if (!dataStore.metadata[parentId]) {
     return res.status(404).json({ error: 'Parent part not found' });
@@ -242,11 +250,11 @@ app.delete('/api/parts/:parentId/children/:childId', (req, res) => {
   }
 
   const childIndex = dataStore.metadata[parentId].children.findIndex(
-    c => c.id === childId
+    c => c.instanceId === instanceId
   );
 
   if (childIndex === -1) {
-    return res.status(404).json({ error: 'Child not found in parent' });
+    return res.status(404).json({ error: 'Child instance not found in parent' });
   }
 
   dataStore.metadata[parentId].children.splice(childIndex, 1);
@@ -256,8 +264,8 @@ app.delete('/api/parts/:parentId/children/:childId', (req, res) => {
 });
 
 // Replace child part in parent part
-app.put('/api/parts/:parentId/children/:oldChildId', (req, res) => {
-  const { parentId, oldChildId } = req.params;
+app.put('/api/parts/:parentId/children/:instanceId', (req, res) => {
+  const { parentId, instanceId } = req.params;
   const { newChildId, position, rotation } = req.body;
 
   if (!dataStore.metadata[parentId]) {
@@ -273,15 +281,16 @@ app.put('/api/parts/:parentId/children/:oldChildId', (req, res) => {
   }
 
   const childIndex = dataStore.metadata[parentId].children.findIndex(
-    c => c.id === oldChildId
+    c => c.instanceId === instanceId
   );
 
   if (childIndex === -1) {
-    return res.status(404).json({ error: 'Old child not found in parent' });
+    return res.status(404).json({ error: 'Old child instance not found in parent' });
   }
 
-  // Replace the child while preserving or updating position/rotation
+  // Replace the child while preserving instanceId and updating position/rotation
   dataStore.metadata[parentId].children[childIndex] = {
+    instanceId: instanceId,
     id: newChildId,
     position: position || dataStore.metadata[parentId].children[childIndex].position,
     rotation: rotation || dataStore.metadata[parentId].children[childIndex].rotation
@@ -293,8 +302,8 @@ app.put('/api/parts/:parentId/children/:oldChildId', (req, res) => {
 });
 
 // Update child relationship data (position/rotation on the relation)
-app.put('/api/parts/:parentId/children/:childId/relation', (req, res) => {
-  const { parentId, childId } = req.params;
+app.put('/api/parts/:parentId/children/:instanceId/relation', (req, res) => {
+  const { parentId, instanceId } = req.params;
   const { position, rotation } = req.body;
 
   if (!dataStore.metadata[parentId]) {
@@ -305,10 +314,10 @@ app.put('/api/parts/:parentId/children/:childId/relation', (req, res) => {
     return res.status(404).json({ error: 'No children found' });
   }
 
-  const child = dataStore.metadata[parentId].children.find(c => c.id === childId);
+  const child = dataStore.metadata[parentId].children.find(c => c.instanceId === instanceId);
 
   if (!child) {
-    return res.status(404).json({ error: 'Child not found in parent' });
+    return res.status(404).json({ error: 'Child instance not found in parent' });
   }
 
   if (position) {
