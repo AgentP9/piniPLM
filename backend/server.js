@@ -225,10 +225,20 @@ app.post('/api/parts/:parentId/children', (req, res) => {
   // Add child with relationship data and unique instance ID
   // Multiple instances of the same part are allowed
   const instanceId = uuidv4();
+  
+  // If no position is provided, automatically offset to avoid overlapping with existing children
+  let childPosition = position;
+  if (!position || (position.x === 0 && position.y === 0 && position.z === 0)) {
+    // Count how many instances of this child already exist
+    const existingInstanceCount = dataStore.metadata[parentId].children.filter(c => c.id === childId).length;
+    // Offset by 2 units on X axis for each instance
+    childPosition = { x: existingInstanceCount * 2, y: 0, z: 0 };
+  }
+  
   dataStore.metadata[parentId].children.push({
     instanceId,
     id: childId,
-    position: position || { x: 0, y: 0, z: 0 },
+    position: childPosition,
     rotation: rotation || { x: 0, y: 0, z: 0 }
   });
 
