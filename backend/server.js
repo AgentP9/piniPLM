@@ -63,6 +63,20 @@ if (fs.existsSync(dataFile)) {
   try {
     const data = fs.readFileSync(dataFile, 'utf8');
     dataStore = JSON.parse(data);
+    
+    // Migration: Add instanceId to existing children that don't have one
+    Object.values(dataStore.metadata).forEach(part => {
+      if (part.children && part.children.length > 0) {
+        part.children.forEach(child => {
+          if (!child.instanceId) {
+            child.instanceId = uuidv4();
+          }
+        });
+      }
+    });
+    
+    // Save migrated data
+    saveData();
   } catch (error) {
     console.error('Error loading data:', error);
   }
@@ -188,6 +202,145 @@ app.put('/api/transform/:id', (req, res) => {
 
   saveData();
   res.json(dataStore.metadata[id]);
+});
+
+// Add child part to parent part
+app.post('/api/parts/:parentId/children', (req, res) => {
+  const parentId = req.params.parentId;
+  const { childId, position, rotation } = req.body;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[childId]) {
+    return res.status(404).json({ error: 'Child part not found' });
+  }
+
+  // Initialize children array if not exists
+  if (!dataStore.metadata[parentId].children) {
+    dataStore.metadata[parentId].children = [];
+  }
+
+  // Add child with relationship data and unique instance ID
+  // Multiple instances of the same part are allowed
+  const instanceId = uuidv4();
+  
+  // If no position is provided, automatically offset to avoid overlapping with existing children
+  let childPosition = position;
+  if (!position || (position.x === 0 && position.y === 0 && position.z === 0)) {
+    // Count how many instances of this child already exist
+    const existingInstanceCount = dataStore.metadata[parentId].children.filter(c => c.id === childId).length;
+    // Offset by 2 units on X axis for each instance
+    childPosition = { x: existingInstanceCount * 2, y: 0, z: 0 };
+  }
+  
+  dataStore.metadata[parentId].children.push({
+    instanceId,
+    id: childId,
+    position: childPosition,
+    rotation: rotation || { x: 0, y: 0, z: 0 }
+  });
+
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
+// Remove child part from parent part
+app.delete('/api/parts/:parentId/children/:instanceId', (req, res) => {
+  const { parentId, instanceId } = req.params;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[parentId].children) {
+    return res.status(404).json({ error: 'No children found' });
+  }
+
+  const childIndex = dataStore.metadata[parentId].children.findIndex(
+    c => c.instanceId === instanceId
+  );
+
+  if (childIndex === -1) {
+    return res.status(404).json({ error: 'Child instance not found in parent' });
+  }
+
+  dataStore.metadata[parentId].children.splice(childIndex, 1);
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
+// Replace child part in parent part
+app.put('/api/parts/:parentId/children/:instanceId', (req, res) => {
+  const { parentId, instanceId } = req.params;
+  const { newChildId, position, rotation } = req.body;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[newChildId]) {
+    return res.status(404).json({ error: 'New child part not found' });
+  }
+
+  if (!dataStore.metadata[parentId].children) {
+    return res.status(404).json({ error: 'No children found' });
+  }
+
+  const childIndex = dataStore.metadata[parentId].children.findIndex(
+    c => c.instanceId === instanceId
+  );
+
+  if (childIndex === -1) {
+    return res.status(404).json({ error: 'Old child instance not found in parent' });
+  }
+
+  // Replace the child while preserving instanceId and updating position/rotation
+  dataStore.metadata[parentId].children[childIndex] = {
+    instanceId: instanceId,
+    id: newChildId,
+    position: position || dataStore.metadata[parentId].children[childIndex].position,
+    rotation: rotation || dataStore.metadata[parentId].children[childIndex].rotation
+  };
+
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
+});
+
+// Update child relationship data (position/rotation on the relation)
+app.put('/api/parts/:parentId/children/:instanceId/relation', (req, res) => {
+  const { parentId, instanceId } = req.params;
+  const { position, rotation } = req.body;
+
+  if (!dataStore.metadata[parentId]) {
+    return res.status(404).json({ error: 'Parent part not found' });
+  }
+
+  if (!dataStore.metadata[parentId].children) {
+    return res.status(404).json({ error: 'No children found' });
+  }
+
+  const child = dataStore.metadata[parentId].children.find(c => c.instanceId === instanceId);
+
+  if (!child) {
+    return res.status(404).json({ error: 'Child instance not found in parent' });
+  }
+
+  if (position) {
+    child.position = position;
+  }
+
+  if (rotation) {
+    child.rotation = rotation;
+  }
+
+  dataStore.metadata[parentId].modifiedAt = new Date().toISOString();
+  saveData();
+  res.json(dataStore.metadata[parentId]);
 });
 
 // Delete file and metadata

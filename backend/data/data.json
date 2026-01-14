@@ -1,0 +1,103 @@
+{
+  "files": [
+    {
+      "id": "ba416d8a-9773-4f36-9b7c-af49867a6ba5",
+      "originalName": "test-part1.obj",
+      "filename": "29b3e992-4710-4980-9acc-d4f470ab45b5.obj",
+      "path": "/home/runner/work/piniPLM/piniPLM/backend/uploads/29b3e992-4710-4980-9acc-d4f470ab45b5.obj",
+      "size": 198,
+      "uploadedAt": "2026-01-13T21:29:22.335Z"
+    },
+    {
+      "id": "56424f9d-f6ca-40c5-b133-91c032e35439",
+      "originalName": "test-part2.obj",
+      "filename": "8d73f454-0fc7-4603-a12c-c42d5512687f.obj",
+      "path": "/home/runner/work/piniPLM/piniPLM/backend/uploads/8d73f454-0fc7-4603-a12c-c42d5512687f.obj",
+      "size": 198,
+      "uploadedAt": "2026-01-13T21:29:44.700Z"
+    }
+  ],
+  "metadata": {
+    "ba416d8a-9773-4f36-9b7c-af49867a6ba5": {
+      "id": "ba416d8a-9773-4f36-9b7c-af49867a6ba5",
+      "name": "test-part1",
+      "nomenclature": "",
+      "description": "",
+      "partNumber": "",
+      "revision": "1",
+      "material": "",
+      "weight": "",
+      "cost": "",
+      "supplier": "",
+      "status": "Draft",
+      "createdAt": "2026-01-13T21:29:22.336Z",
+      "modifiedAt": "2026-01-14T08:18:37.177Z",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "children": [
+        {
+          "id": "56424f9d-f6ca-40c5-b133-91c032e35439",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "instanceId": "3706b3b7-f965-4680-bd40-f86b6d4d7e1f"
+        },
+        {
+          "instanceId": "d4996666-badc-47eb-82c7-6c8c3998adf5",
+          "id": "56424f9d-f6ca-40c5-b133-91c032e35439",
+          "position": {
+            "x": 2,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ]
+    },
+    "56424f9d-f6ca-40c5-b133-91c032e35439": {
+      "id": "56424f9d-f6ca-40c5-b133-91c032e35439",
+      "name": "test-part2",
+      "nomenclature": "",
+      "description": "",
+      "partNumber": "",
+      "revision": "1",
+      "material": "",
+      "weight": "",
+      "cost": "",
+      "supplier": "",
+      "status": "Draft",
+      "createdAt": "2026-01-13T21:29:44.700Z",
+      "modifiedAt": "2026-01-13T21:29:44.700Z",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "children": []
+    }
+  }
+}

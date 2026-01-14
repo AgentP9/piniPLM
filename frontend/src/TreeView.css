@@ -82,3 +82,39 @@
 .tree-node-children {
   margin-left: 0;
 }
+
+.tree-node-actions {
+  display: flex;
+  gap: 5px;
+  margin-left: 10px;
+}
+
+.tree-action-btn {
+  background: #4dabf7;
+  border: none;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.tree-action-btn:hover {
+  background: #339af0;
+}
+
+.tree-remove-btn {
+  background: #ff6b6b;
+  border: none;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  transition: background 0.2s;
+}
+
+.tree-remove-btn:hover {
+  background: #fa5252;
+}
