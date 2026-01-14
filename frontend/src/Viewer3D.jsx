@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Box, TransformControls } from '@react-three/drei';
+import Model3D from './Model3D';
 
 // Component representing a 3D object
-function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
+function Component3D({ id, position, rotation, isSelected, onSelect, color, filename }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
 
@@ -13,9 +14,8 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
 
   return (
     <group position={position} rotation={rotation}>
-      <Box
+      <group
         ref={meshRef}
-        args={[1, 1, 1]}
         onClick={(e) => {
           e.stopPropagation();
           onSelect(id);
@@ -26,18 +26,19 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
         }}
         onPointerOut={() => setHovered(false)}
       >
-        <meshStandardMaterial 
-          color={isSelected ? '#ff6b6b' : (hovered ? '#4dabf7' : color)}
-          emissive={isSelected ? '#ff6b6b' : '#000000'}
-          emissiveIntensity={isSelected ? 0.3 : 0}
+        <Model3D 
+          filename={filename}
+          color={color}
+          isSelected={isSelected}
+          hovered={hovered}
         />
-      </Box>
+      </group>
     </group>
   );
 }
 
 // Transform controls wrapper
-function TransformableComponent({ id, position, rotation, isSelected, onTransformEnd }) {
+function TransformableComponent({ id, position, rotation, isSelected, onTransformEnd, filename }) {
   const transformRef = useRef();
   const groupRef = useRef();
 
@@ -67,9 +68,12 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
       {isSelected && <TransformControls ref={transformRef} mode="translate" />}
-      <Box args={[1, 1, 1]}>
-        <meshStandardMaterial color={isSelected ? '#ff6b6b' : '#4dabf7'} />
-      </Box>
+      <Model3D 
+        filename={filename}
+        color={isSelected ? '#ff6b6b' : '#4dabf7'}
+        isSelected={isSelected}
+        hovered={false}
+      />
     </group>
   );
 }
@@ -111,6 +115,7 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
                 rotation={rot}
                 isSelected={true}
                 onTransformEnd={onTransformEnd}
+                filename={instance.filename}
               />
             );
           }
@@ -125,6 +130,7 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
               isSelected={instance.renderKey === selectedId}
               onSelect={onSelectComponent}
               color={instance.color || '#4dabf7'}
+              filename={instance.filename}
             />
           );
         })}

@@ -5,8 +5,10 @@ A modern web-based PDM/PLM (Product Data Management / Product Lifecycle Manageme
 ## Features
 
 - **File Upload**: Upload JT files and other 3D model formats (OBJ, STL, GLTF, GLB)
-- **Product Structure Tree**: Hierarchical view of product components
 - **3D Viewer**: Interactive 3D visualization with navigation controls
+  - Supports OBJ, STL, GLTF, and GLB file formats
+  - Note: JT format requires conversion to supported formats (see [JT File Support](#jt-file-support))
+- **Product Structure Tree**: Hierarchical view of product components
 - **Metadata Management**: Edit component properties (name, nomenclature, part number, etc.)
 - **Transform Controls**: Move and rotate components in 3D space
 - **Linked Views**: Tree view, 3D view, and properties panel work together
@@ -140,6 +142,40 @@ This is an initial setup intended for development and demonstration purposes. Fo
 - HTTPS/TLS encryption
 - Backup and recovery mechanisms
 - Load balancing and scaling strategies
+
+## JT File Support
+
+JT (Jupiter Tessellation) is a proprietary 3D CAD format developed by Siemens. Unfortunately, there is no native JavaScript/Three.js loader for JT files.
+
+### Current Support
+
+The application currently supports the following 3D file formats for visualization:
+- **OBJ** - Wavefront OBJ format
+- **STL** - Stereolithography format
+- **GLTF/GLB** - GL Transmission Format
+
+### Working with JT Files
+
+If you need to visualize JT files, you have the following options:
+
+1. **Convert JT to Supported Format**: Use external tools to convert JT files to OBJ, STL, or GLTF/GLB format before uploading:
+   - Siemens JT2Go (free viewer with export capabilities)
+   - CAD software that supports JT import and export to other formats
+   - Online conversion services
+
+2. **Server-Side Conversion** (Future Enhancement): Integration with conversion tools like:
+   - Open CASCADE Technology (OCCT)
+   - Assimp (Open Asset Import Library)
+   - Commercial conversion APIs
+
+3. **Placeholder Display**: Currently, JT files can be uploaded and managed in the system (metadata, structure, etc.), but will display as placeholder boxes in the 3D viewer until converted to a supported format.
+
+### File Upload Behavior
+
+- Uploaded JT files are accepted and stored by the system
+- Metadata management works normally for JT files
+- 3D visualization shows a cube placeholder instead of the actual geometry
+- A console warning indicates when JT files cannot be rendered
 
 ## License
 
