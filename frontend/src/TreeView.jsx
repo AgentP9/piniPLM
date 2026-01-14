@@ -49,9 +49,17 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
               title="Add Child Part"
               onClick={(e) => {
                 e.stopPropagation();
-                const childId = prompt('Enter child part ID to add (available parts will be shown):\n\n' + 
+                const input = prompt('Enter child part name or ID to add (available parts will be shown):\n\n' + 
                   allComponents.map(c => `${c.name} (${c.id})`).join('\n'));
-                if (childId) handleAddChild(childId);
+                if (input) {
+                  // Try to find by name first, then by ID
+                  const childPart = allComponents.find(c => c.name === input || c.id === input);
+                  if (childPart) {
+                    handleAddChild(childPart.id);
+                  } else {
+                    alert(`Part "${input}" not found. Please enter a valid part name or ID.`);
+                  }
+                }
               }}
             >
               ➕
