@@ -36,7 +36,7 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
         />
       )}
       <div
-        className={`tree-node-content ${node.id === selectedId ? 'selected' : ''}`}
+        className={`tree-node-content ${(node.instanceId || node.id) === selectedId ? 'selected' : ''}`}
         style={{ paddingLeft: `${level * 20 + 10}px` }}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}

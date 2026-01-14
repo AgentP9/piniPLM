@@ -136,14 +136,47 @@ function App() {
 
   const handleUpdateMetadata = (updatedData) => {
     // Update local state immediately for responsive UI
-    setComponents((prev) =>
-      prev.map((c) => (c.id === updatedData.id ? updatedData : c))
-    );
+    // Check if this is a child instance (has instanceId and parentId)
+    if (updatedData.instanceId && updatedData.parentId) {
+      // Update child instance's relationship data
+      setComponents((prev) =>
+        prev.map((c) => {
+          if (c.id === updatedData.parentId && c.children) {
+            // Update the specific child instance in the parent's children array
+            return {
+              ...c,
+              children: c.children.map((child) =>
+                child.instanceId === updatedData.instanceId
+                  ? {
+                      ...child,
+                      position: updatedData.position,
+                      rotation: updatedData.rotation,
+                    }
+                  : child
+              ),
+            };
+          }
+          return c;
+        })
+      );
+    } else {
+      // Update root part data
+      setComponents((prev) =>
+        prev.map((c) => (c.id === updatedData.id ? updatedData : c))
+      );
+    }
   };
 
   const handleSaveMetadata = async (data) => {
     try {
-      await api.updateMetadata(data.id, data);
+      // Check if this is a child instance (has instanceId and parentId)
+      if (data.instanceId && data.parentId) {
+        // Update child instance's relationship data
+        await api.updateChildRelation(data.parentId, data.instanceId, data.position, data.rotation);
+      } else {
+        // Update root part metadata
+        await api.updateMetadata(data.id, data);
+      }
       await loadComponents();
       alert('Changes saved successfully!');
     } catch (error) {
