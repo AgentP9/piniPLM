@@ -226,7 +226,7 @@ app.post('/api/parts/:parentId/children', (req, res) => {
   // Multiple instances of the same part are allowed
   const instanceId = uuidv4();
   dataStore.metadata[parentId].children.push({
-    instanceId: instanceId,
+    instanceId,
     id: childId,
     position: position || { x: 0, y: 0, z: 0 },
     rotation: rotation || { x: 0, y: 0, z: 0 }

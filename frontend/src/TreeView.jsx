@@ -14,9 +14,9 @@ function TreeNode({ node, allComponents, selectedId, onSelect, onAddChild, onRem
     }
   };
 
-  const handleRemoveChild = (childId) => {
+  const handleRemoveChild = (instanceId) => {
     if (onRemoveChild) {
-      onRemoveChild(node.id, childId);
+      onRemoveChild(node.id, instanceId);
     }
   };
 
