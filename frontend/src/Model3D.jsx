@@ -1,20 +1,17 @@
-import React, { useRef, useEffect, Suspense } from 'react';
+import React, { useRef, useEffect, Suspense, useMemo } from 'react';
 import { useLoader } from '@react-three/fiber';
 import { Box } from '@react-three/drei';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
-
-// Get API URL
-const API_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-  ? `http://${window.location.hostname}:2024`
-  : (import.meta.env.VITE_API_URL || 'http://localhost:2024');
+import { API_URL, getMaterialProps } from './renderUtils';
 
 // Component to load and display OBJ files
 function OBJModel({ url, color, isSelected, hovered }) {
   const obj = useLoader(OBJLoader, url);
   const groupRef = useRef();
+  const materialProps = useMemo(() => getMaterialProps(color, isSelected, hovered), [color, isSelected, hovered]);
 
   useEffect(() => {
     if (obj && groupRef.current) {
@@ -26,15 +23,11 @@ function OBJModel({ url, color, isSelected, hovered }) {
       // Apply material to all meshes
       obj.traverse((child) => {
         if (child.isMesh) {
-          child.material = new THREE.MeshStandardMaterial({
-            color: isSelected ? '#ff6b6b' : (hovered ? '#4dabf7' : color),
-            emissive: isSelected ? '#ff6b6b' : '#000000',
-            emissiveIntensity: isSelected ? 0.3 : 0,
-          });
+          child.material = new THREE.MeshStandardMaterial(materialProps);
         }
       });
     }
-  }, [obj, color, isSelected, hovered]);
+  }, [obj, materialProps]);
 
   return <primitive ref={groupRef} object={obj} />;
 }
@@ -42,17 +35,14 @@ function OBJModel({ url, color, isSelected, hovered }) {
 // Component to load and display STL files
 function STLModel({ url, color, isSelected, hovered }) {
   const geometry = useLoader(STLLoader, url);
+  const materialProps = useMemo(() => getMaterialProps(color, isSelected, hovered), [color, isSelected, hovered]);
 
   // Center the geometry
   geometry.center();
 
   return (
     <mesh geometry={geometry}>
-      <meshStandardMaterial 
-        color={isSelected ? '#ff6b6b' : (hovered ? '#4dabf7' : color)}
-        emissive={isSelected ? '#ff6b6b' : '#000000'}
-        emissiveIntensity={isSelected ? 0.3 : 0}
-      />
+      <meshStandardMaterial {...materialProps} />
     </mesh>
   );
 }
@@ -61,6 +51,7 @@ function STLModel({ url, color, isSelected, hovered }) {
 function GLTFModel({ url, color, isSelected, hovered }) {
   const gltf = useLoader(GLTFLoader, url);
   const groupRef = useRef();
+  const materialProps = useMemo(() => getMaterialProps(color, isSelected, hovered), [color, isSelected, hovered]);
 
   useEffect(() => {
     if (gltf && gltf.scene && groupRef.current) {
@@ -72,28 +63,22 @@ function GLTFModel({ url, color, isSelected, hovered }) {
       // Apply material to all meshes
       gltf.scene.traverse((child) => {
         if (child.isMesh) {
-          child.material = new THREE.MeshStandardMaterial({
-            color: isSelected ? '#ff6b6b' : (hovered ? '#4dabf7' : color),
-            emissive: isSelected ? '#ff6b6b' : '#000000',
-            emissiveIntensity: isSelected ? 0.3 : 0,
-          });
+          child.material = new THREE.MeshStandardMaterial(materialProps);
         }
       });
     }
-  }, [gltf, color, isSelected, hovered]);
+  }, [gltf, materialProps]);
 
   return <primitive ref={groupRef} object={gltf.scene} />;
 }
 
 // Fallback component (Box) for unsupported formats or loading errors
 function FallbackBox({ color, isSelected, hovered }) {
+  const materialProps = useMemo(() => getMaterialProps(color, isSelected, hovered), [color, isSelected, hovered]);
+  
   return (
     <Box args={[1, 1, 1]}>
-      <meshStandardMaterial 
-        color={isSelected ? '#ff6b6b' : (hovered ? '#4dabf7' : color)}
-        emissive={isSelected ? '#ff6b6b' : '#000000'}
-        emissiveIntensity={isSelected ? 0.3 : 0}
-      />
+      <meshStandardMaterial {...materialProps} />
     </Box>
   );
 }
@@ -106,7 +91,11 @@ export default function Model3D({ filename, color, isSelected, hovered }) {
   }
 
   const fileUrl = `${API_URL}/uploads/${filename}`;
-  const extension = filename.split('.').pop().toLowerCase();
+  const extension = filename ? filename.split('.').pop().toLowerCase() : '';
+
+  if (!extension) {
+    return <FallbackBox color={color} isSelected={isSelected} hovered={hovered} />;
+  }
 
   // Select appropriate loader based on file extension
   if (extension === 'obj') {
