@@ -83,15 +83,20 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
-        camera={{ position: [5, 5, 5], fov: 50 }}
+        camera={{ 
+          position: [15, 15, 15], 
+          fov: 50,
+          near: 0.1,
+          far: 10000
+        }}
         style={{ background: '#1a1a1a' }}
       >
         <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+        <directionalLight position={[50, 50, 50]} intensity={1} />
+        <directionalLight position={[-50, -50, -50]} intensity={0.5} />
         
-        {/* Grid helper */}
-        <gridHelper args={[20, 20, '#444444', '#222222']} />
+        {/* Grid helper - larger size for big models */}
+        <gridHelper args={[200, 40, '#444444', '#222222']} />
         
         {/* Render all instances (root parts and child instances) */}
         {instances.map((instance) => {
@@ -135,7 +140,11 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
           );
         })}
         
-        <OrbitControls makeDefault />
+        <OrbitControls 
+          makeDefault 
+          maxDistance={1000}
+          minDistance={0.5}
+        />
       </Canvas>
       
       <div style={{
