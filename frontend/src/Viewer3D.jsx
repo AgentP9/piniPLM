@@ -4,7 +4,7 @@ import { OrbitControls, Box, TransformControls } from '@react-three/drei';
 import Model3D from './Model3D';
 
 // Component representing a 3D object
-function Component3D({ id, position, rotation, isSelected, onSelect, color, filename }) {
+function Component3D({ id, position, rotation, isSelected, onSelect, color, filename, faceAlignMode, onFaceSelect }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
 
@@ -18,7 +18,17 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color, file
         ref={meshRef}
         onClick={(e) => {
           e.stopPropagation();
-          onSelect(id);
+          if (faceAlignMode && onFaceSelect) {
+            // In face align mode, capture face selection data
+            onFaceSelect({
+              componentId: id,
+              point: e.point,
+              normal: e.face?.normal,
+              position: position
+            });
+          } else {
+            onSelect(id);
+          }
         }}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -31,6 +41,7 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color, file
           color={color}
           isSelected={isSelected}
           hovered={hovered}
+          faceAlignMode={faceAlignMode}
         />
       </group>
     </group>
@@ -38,7 +49,7 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color, file
 }
 
 // Transform controls wrapper
-function TransformableComponent({ id, position, rotation, isSelected, onTransformEnd, filename }) {
+function TransformableComponent({ id, position, rotation, isSelected, onTransformEnd, filename, transformMode, faceAlignMode }) {
   const transformRef = useRef();
   const groupRef = useRef();
 
@@ -67,19 +78,20 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
 
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
-      {isSelected && <TransformControls ref={transformRef} mode="translate" />}
+      {isSelected && !faceAlignMode && <TransformControls ref={transformRef} mode={transformMode} />}
       <Model3D 
         filename={filename}
         color={isSelected ? '#ff6b6b' : '#4dabf7'}
         isSelected={isSelected}
         hovered={false}
+        faceAlignMode={faceAlignMode}
       />
     </group>
   );
 }
 
 // Main 3D Viewer component
-export default function Viewer3D({ instances = [], selectedId, onSelectComponent, onTransformEnd }) {
+export default function Viewer3D({ instances = [], selectedId, onSelectComponent, onTransformEnd, transformMode = 'translate', faceAlignMode = false, onFaceSelect }) {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
@@ -121,6 +133,8 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
                 isSelected={true}
                 onTransformEnd={onTransformEnd}
                 filename={instance.filename}
+                transformMode={transformMode}
+                faceAlignMode={faceAlignMode}
               />
             );
           }
@@ -136,6 +150,8 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
               onSelect={onSelectComponent}
               color={instance.color || '#4dabf7'}
               filename={instance.filename}
+              faceAlignMode={faceAlignMode}
+              onFaceSelect={onFaceSelect}
             />
           );
         })}
@@ -160,8 +176,26 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
         <div>Navigation: Left click + drag to rotate</div>
         <div>Right click + drag to pan</div>
         <div>Scroll to zoom</div>
-        <div>Select component to move/rotate</div>
+        <div>Select component to transform</div>
+        {faceAlignMode && <div style={{color: '#ff6b6b', fontWeight: 'bold'}}>Face Align Mode Active - Select 2 faces</div>}
       </div>
+      
+      {/* Transform Mode Controls */}
+      {selectedId && !faceAlignMode && (
+        <div style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          background: 'rgba(0,0,0,0.8)',
+          color: 'white',
+          padding: '10px',
+          borderRadius: '5px',
+          fontSize: '12px'
+        }}>
+          <div style={{marginBottom: '5px', fontWeight: 'bold'}}>Transform Mode:</div>
+          <div>Current: {transformMode.toUpperCase()}</div>
+        </div>
+      )}
     </div>
   );
 }
