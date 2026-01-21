@@ -41,7 +41,6 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color, file
           color={color}
           isSelected={isSelected}
           hovered={hovered}
-          faceAlignMode={faceAlignMode}
         />
       </group>
     </group>
@@ -84,7 +83,6 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
         color={isSelected ? '#ff6b6b' : '#4dabf7'}
         isSelected={isSelected}
         hovered={false}
-        faceAlignMode={faceAlignMode}
       />
     </group>
   );

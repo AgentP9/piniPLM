@@ -262,15 +262,14 @@ function App() {
 
   const performFaceAlignment = (face1, face2) => {
     // Calculate the transformation needed to align face1 to face2
-    // This is a simplified implementation
-    console.log('Aligning faces:', face1, face2);
-    alert('Face alignment feature: Aligning selected faces. This will move the first component to align with the second.');
-    
+    // This is a placeholder implementation
     // In a real implementation, this would:
     // 1. Calculate the normal vectors of both faces
     // 2. Calculate the rotation needed to align the normals
     // 3. Calculate the translation to bring the faces into contact
     // 4. Apply the transformation to the component
+    
+    alert(`Face alignment: Selected faces from components ${face1.componentId} and ${face2.componentId}.\n\nThis feature is ready for full implementation with proper face normal calculation and component transformation.`);
     
     // Reset face selection
     setSelectedFaces([]);
