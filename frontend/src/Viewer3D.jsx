@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Box, TransformControls } from '@react-three/drei';
+import Model3D from './Model3D';
 
 // Component representing a 3D object
-function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
+function Component3D({ id, position, rotation, isSelected, onSelect, color, filename }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
 
@@ -13,9 +14,8 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
 
   return (
     <group position={position} rotation={rotation}>
-      <Box
+      <group
         ref={meshRef}
-        args={[1, 1, 1]}
         onClick={(e) => {
           e.stopPropagation();
           onSelect(id);
@@ -26,18 +26,19 @@ function Component3D({ id, position, rotation, isSelected, onSelect, color }) {
         }}
         onPointerOut={() => setHovered(false)}
       >
-        <meshStandardMaterial 
-          color={isSelected ? '#ff6b6b' : (hovered ? '#4dabf7' : color)}
-          emissive={isSelected ? '#ff6b6b' : '#000000'}
-          emissiveIntensity={isSelected ? 0.3 : 0}
+        <Model3D 
+          filename={filename}
+          color={color}
+          isSelected={isSelected}
+          hovered={hovered}
         />
-      </Box>
+      </group>
     </group>
   );
 }
 
 // Transform controls wrapper
-function TransformableComponent({ id, position, rotation, isSelected, onTransformEnd }) {
+function TransformableComponent({ id, position, rotation, isSelected, onTransformEnd, filename }) {
   const transformRef = useRef();
   const groupRef = useRef();
 
@@ -67,9 +68,12 @@ function TransformableComponent({ id, position, rotation, isSelected, onTransfor
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
       {isSelected && <TransformControls ref={transformRef} mode="translate" />}
-      <Box args={[1, 1, 1]}>
-        <meshStandardMaterial color={isSelected ? '#ff6b6b' : '#4dabf7'} />
-      </Box>
+      <Model3D 
+        filename={filename}
+        color={isSelected ? '#ff6b6b' : '#4dabf7'}
+        isSelected={isSelected}
+        hovered={false}
+      />
     </group>
   );
 }
@@ -79,15 +83,20 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
-        camera={{ position: [5, 5, 5], fov: 50 }}
+        camera={{ 
+          position: [15, 15, 15], 
+          fov: 50,
+          near: 0.1,
+          far: 50000
+        }}
         style={{ background: '#1a1a1a' }}
       >
         <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+        <directionalLight position={[100, 100, 100]} intensity={1} />
+        <directionalLight position={[-100, -100, -100]} intensity={0.5} />
         
-        {/* Grid helper */}
-        <gridHelper args={[20, 20, '#444444', '#222222']} />
+        {/* Grid helper - larger size for very big models */}
+        <gridHelper args={[1000, 50, '#444444', '#222222']} />
         
         {/* Render all instances (root parts and child instances) */}
         {instances.map((instance) => {
@@ -111,6 +120,7 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
                 rotation={rot}
                 isSelected={true}
                 onTransformEnd={onTransformEnd}
+                filename={instance.filename}
               />
             );
           }
@@ -125,11 +135,16 @@ export default function Viewer3D({ instances = [], selectedId, onSelectComponent
               isSelected={instance.renderKey === selectedId}
               onSelect={onSelectComponent}
               color={instance.color || '#4dabf7'}
+              filename={instance.filename}
             />
           );
         })}
         
-        <OrbitControls makeDefault />
+        <OrbitControls 
+          makeDefault 
+          maxDistance={20000}
+          minDistance={0.5}
+        />
       </Canvas>
       
       <div style={{

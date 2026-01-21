@@ -48,7 +48,8 @@ function App() {
         rotation: relationData?.rotation || comp.rotation,
         color: comp.color,
         isChildInstance: !!relationData,
-        parentId
+        parentId,
+        filename: comp.filename // Add filename to instance
       });
       
       // Process children recursively

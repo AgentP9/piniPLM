@@ -161,7 +161,17 @@ app.get('/api/metadata/:id', (req, res) => {
 
 // Get all metadata
 app.get('/api/metadata', (req, res) => {
-  res.json(dataStore.metadata);
+  // Enrich metadata with file information
+  const enrichedMetadata = {};
+  Object.keys(dataStore.metadata).forEach(id => {
+    const file = dataStore.files.find(f => f.id === id);
+    enrichedMetadata[id] = {
+      ...dataStore.metadata[id],
+      filename: file ? file.filename : null,
+      originalName: file ? file.originalName : null
+    };
+  });
+  res.json(enrichedMetadata);
 });
 
 // Update metadata
