@@ -12,6 +12,9 @@ function App() {
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [currentView, setCurrentView] = useState('geometry'); // 'geometry', 'metadata', 'structure'
+  const [transformMode, setTransformMode] = useState('translate'); // 'translate', 'rotate', 'scale'
+  const [faceAlignMode, setFaceAlignMode] = useState(false);
+  const [selectedFaces, setSelectedFaces] = useState([]); // Store selected faces for alignment
 
   const loadComponents = async () => {
     try {
@@ -241,6 +244,43 @@ function App() {
     }
   };
 
+  const handleFaceSelect = (faceData) => {
+    if (!faceAlignMode) return;
+    
+    setSelectedFaces(prev => {
+      const newFaces = [...prev, faceData];
+      
+      // If we have two faces selected, perform alignment
+      if (newFaces.length === 2) {
+        performFaceAlignment(newFaces[0], newFaces[1]);
+        return []; // Reset after alignment
+      }
+      
+      return newFaces;
+    });
+  };
+
+  const performFaceAlignment = (face1, face2) => {
+    // Calculate the transformation needed to align face1 to face2
+    // This is a placeholder implementation
+    // In a real implementation, this would:
+    // 1. Calculate the normal vectors of both faces
+    // 2. Calculate the rotation needed to align the normals
+    // 3. Calculate the translation to bring the faces into contact
+    // 4. Apply the transformation to the component
+    
+    alert(`Face alignment: Selected faces from components ${face1.componentId} and ${face2.componentId}.\n\nThis feature is ready for full implementation with proper face normal calculation and component transformation.`);
+    
+    // Reset face selection
+    setSelectedFaces([]);
+    setFaceAlignMode(false);
+  };
+
+  const toggleFaceAlignMode = () => {
+    setFaceAlignMode(prev => !prev);
+    setSelectedFaces([]); // Reset selected faces when toggling
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -255,6 +295,29 @@ function App() {
                 <option value="structure">Structure View</option>
               </select>
             </div>
+            {currentView === 'geometry' && selectedId && (
+              <div className="view-selector">
+                <label>Transform:</label>
+                <select value={transformMode} onChange={(e) => setTransformMode(e.target.value)} disabled={faceAlignMode}>
+                  <option value="translate">Move (Translate)</option>
+                  <option value="rotate">Rotate</option>
+                  <option value="scale">Scale</option>
+                </select>
+              </div>
+            )}
+            {currentView === 'geometry' && (
+              <button
+                className={`upload-button ${faceAlignMode ? 'active' : ''}`}
+                onClick={toggleFaceAlignMode}
+                style={{
+                  backgroundColor: faceAlignMode ? '#ff6b6b' : undefined,
+                  fontWeight: faceAlignMode ? 'bold' : undefined
+                }}
+                title={faceAlignMode ? `Face Align Mode ON (${selectedFaces.length}/2 faces selected)` : 'Click to enable Face Align mode'}
+              >
+                {faceAlignMode ? `Face Align ON (${selectedFaces.length}/2)` : 'Face Align OFF'}
+              </button>
+            )}
             <button
               className="upload-button"
               onClick={() => setShowUpload(!showUpload)}
@@ -290,6 +353,9 @@ function App() {
               selectedId={selectedId}
               onSelectComponent={handleSelectComponent}
               onTransformEnd={handleTransformEnd}
+              transformMode={transformMode}
+              faceAlignMode={faceAlignMode}
+              onFaceSelect={handleFaceSelect}
             />
           ) : currentView === 'metadata' ? (
             <div className="view-placeholder">

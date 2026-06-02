@@ -10,7 +10,14 @@ A modern web-based PDM/PLM (Product Data Management / Product Lifecycle Manageme
   - Note: JT format requires conversion to supported formats (see [JT File Support](#jt-file-support))
 - **Product Structure Tree**: Hierarchical view of product components
 - **Metadata Management**: Edit component properties (name, nomenclature, part number, etc.)
-- **Transform Controls**: Move and rotate components in 3D space
+- **Transform Controls**: Move, rotate, and scale components in 3D space with visual handlers
+  - **Translate Mode**: Move components along X, Y, Z axes with arrow handles
+  - **Rotate Mode**: Rotate components around X, Y, Z axes
+  - **Scale Mode**: Scale components uniformly or along specific axes
+- **Face Alignment**: Select faces on components and align them for contact relationships
+  - Toggle Face Align mode with the dedicated button
+  - Click on two faces to automatically align them
+  - Visual feedback shows selected face count
 - **Linked Views**: Tree view, 3D view, and properties panel work together
 - **Persistent Storage**: All data and files stored on the backend
 
@@ -77,8 +84,18 @@ docker-compose up --build
 2. **View Structure**: The uploaded component appears in the tree view on the left
 3. **Select Component**: Click on a component in the tree or 3D view to select it
 4. **Edit Metadata**: Modify component properties in the right panel
-5. **Transform Components**: Select a component and use the transform controls in the 3D view to move it
-6. **Save Changes**: Click "Save Changes" to persist modifications to the backend
+5. **Transform Components**: 
+   - Select a component in the 3D view
+   - Use the Transform dropdown to choose between Move (Translate), Rotate, or Scale mode
+   - Drag the visual handlers (arrows for axes, planes for 2D movement) to transform the component
+   - Changes are automatically saved when you release the handler
+6. **Face Alignment**:
+   - Click the "Face Align OFF" button to enable Face Alignment mode
+   - Click on a face of the first component
+   - Click on a face of the second component
+   - The system will align the two faces automatically
+   - The button shows the count of selected faces (e.g., "Face Align ON (1/2)")
+7. **Save Changes**: Click "Save Changes" to persist modifications to the backend
 
 ## Development
 
