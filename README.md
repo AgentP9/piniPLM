@@ -17,6 +17,19 @@ uvicorn app.main:app --reload
 
 Open the structure UI at `http://127.0.0.1:8000/` to load products/codes and resolve structure across multiple selected products.
 
+## Docker
+
+Run the backend and Next.js UI as separate containers:
+
+```bash
+docker compose up --build
+```
+
+Access:
+
+- UI: `http://localhost:3000`
+- API: `http://localhost:8000`
+
 ## Authentication
 
 Use header:
