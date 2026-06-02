@@ -9,3 +9,5 @@ uploads/
 *.sqlite
 .vscode/
 .idea/
+ui/node_modules
+ui/.next
