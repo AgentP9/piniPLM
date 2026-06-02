@@ -990,16 +990,24 @@ def resolve_product(product_key: str, body: ResolveRequest, baseline: str | None
 
 
 def seed_initial_data(db: Session):
-    if db.execute(select(AppUser)).first():
+    if db.execute(select(ProductMaster)).first():
         return
 
-    admin = AppUser(id="11111111-1111-1111-1111-111111111111", name="admin", email="admin@example.com", is_global_admin=True)
-    user1 = AppUser(id="22222222-2222-2222-2222-222222222222", name="user1", email="user1@example.com", is_global_admin=False)
-    user2 = AppUser(id="33333333-3333-3333-3333-333333333333", name="user2", email="user2@example.com", is_global_admin=False)
-    db.add_all([admin, user1, user2])
+    admin = db.get(AppUser, "11111111-1111-1111-1111-111111111111")
+    if not admin:
+        admin = AppUser(id="11111111-1111-1111-1111-111111111111", name="admin", email="admin@example.com", is_global_admin=True)
+        db.add(admin)
+    user1 = db.get(AppUser, "22222222-2222-2222-2222-222222222222")
+    if not user1:
+        user1 = AppUser(id="22222222-2222-2222-2222-222222222222", name="user1", email="user1@example.com", is_global_admin=False)
+        db.add(user1)
+    user2 = db.get(AppUser, "33333333-3333-3333-3333-333333333333")
+    if not user2:
+        user2 = AppUser(id="33333333-3333-3333-3333-333333333333", name="user2", email="user2@example.com", is_global_admin=False)
+        db.add(user2)
 
-    prodA = ProductMaster(key="prodA", name="Product A")
-    prodB = ProductMaster(key="prodB", name="Product B")
+    prodA = ProductMaster(key="prodA", name="Sedan")
+    prodB = ProductMaster(key="prodB", name="Convertible")
     partA = PartMaster(key="partA", name="Part A")
     partB = PartMaster(key="partB", name="Part B")
     org = OrgNode(key="rearaxle", name="Rear Axle")

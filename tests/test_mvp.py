@@ -9,7 +9,7 @@ os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 from app.main import app, seed_initial_data
 from app.condition import canonical_expr, eval_expr, parse_expr
 from app.database import Base, engine
-from app.models import ProductMaster, UsageMaster
+from app.models import AppUser, ProductMaster, UsageMaster
 from sqlalchemy import select
 from app.database import SessionLocal
 
@@ -112,3 +112,26 @@ def test_structure_ui_available_with_multiselect_controls():
     assert "nextPLM Structure Explorer" in r.text
     assert 'id="productSelect" multiple' in r.text
     assert 'id="codeSelect" multiple' in r.text
+
+
+def test_seed_initial_data_when_users_exist_but_products_missing():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    with SessionLocal() as db:
+        db.add(
+            AppUser(
+                id=ADMIN,
+                name="admin",
+                email="admin@example.com",
+                is_global_admin=True,
+            )
+        )
+        db.commit()
+        seed_initial_data(db)
+
+        products = db.execute(select(ProductMaster)).scalars().all()
+        by_key = {p.key: p.name for p in products}
+
+        assert by_key["prodA"] == "Sedan"
+        assert by_key["prodB"] == "Convertible"
