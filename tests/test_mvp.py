@@ -104,3 +104,11 @@ def test_baseline_immutability():
     assert after_baseline.status_code == 200
     assert len(after_baseline.json()["usages"]) == before_count
 
+
+def test_structure_ui_available_with_multiselect_controls():
+    c = client()
+    r = c.get("/")
+    assert r.status_code == 200
+    assert "nextPLM Structure Explorer" in r.text
+    assert 'id="productSelect" multiple' in r.text
+    assert 'id="codeSelect" multiple' in r.text

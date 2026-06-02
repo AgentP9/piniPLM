@@ -15,6 +15,8 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+Open the structure UI at `http://127.0.0.1:8000/` to load products/codes and resolve structure across multiple selected products.
+
 ## Authentication
 
 Use header:

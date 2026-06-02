@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.orm import Session
@@ -141,6 +142,165 @@ class Msg(BaseModel):
 
 
 app = FastAPI(title="nextPLM MVP", version="0.1.0")
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def structure_ui():
+    return """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>nextPLM Structure Explorer</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: Inter, system-ui, -apple-system, sans-serif; margin: 0; background: #0b1020; color: #e7ecff; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 16px; font-size: 1.6rem; }
+    .panel { background: #111a33; border: 1px solid #2a3a66; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    label { font-size: 0.88rem; color: #a6b3d9; display: block; margin-bottom: 6px; }
+    input, select, button { width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid #2f4278; background: #0d1630; color: #f3f6ff; padding: 10px; }
+    select[multiple] { min-height: 140px; }
+    button { cursor: pointer; background: linear-gradient(90deg, #3965ff, #5f85ff); border: 0; font-weight: 600; }
+    button:hover { filter: brightness(1.08); }
+    .actions { display: flex; gap: 12px; margin-top: 12px; }
+    .actions button { width: auto; padding: 10px 16px; }
+    .muted { color: #9ba8d1; font-size: 0.9rem; margin-top: 8px; }
+    .result-card { border: 1px solid #2a3a66; border-radius: 12px; padding: 12px; margin-bottom: 12px; background: #0e1730; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { text-align: left; border-bottom: 1px solid #2a3a66; padding: 8px; font-size: 0.9rem; vertical-align: top; }
+    .error { color: #ff9aa7; }
+    code { background: #131f3e; border-radius: 6px; padding: 2px 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>nextPLM Structure Explorer</h1>
+    <div class="panel">
+      <div class="grid">
+        <div>
+          <label for="userId">X-User-Id</label>
+          <input id="userId" value="22222222-2222-2222-2222-222222222222" />
+        </div>
+        <div>
+          <label for="branch">Branch</label>
+          <input id="branch" value="main" />
+        </div>
+        <div>
+          <label for="baseline">Baseline (optional)</label>
+          <input id="baseline" placeholder="R2026.01" />
+        </div>
+      </div>
+      <div class="grid" style="margin-top:12px;">
+        <div>
+          <label for="productSelect">Products (multi-select)</label>
+          <select id="productSelect" multiple></select>
+        </div>
+        <div>
+          <label for="codeSelect">Codes (multi-select)</label>
+          <select id="codeSelect" multiple></select>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="loadBtn" type="button">Load products &amp; codes</button>
+        <button id="resolveBtn" type="button">Resolve structure</button>
+      </div>
+      <div class="muted">Select one or more products and codes to configure and compare structure results across products.</div>
+    </div>
+    <div id="status" class="muted"></div>
+    <div id="results"></div>
+  </div>
+<script>
+const byId = (id) => document.getElementById(id);
+const selectedValues = (id) => Array.from(byId(id).selectedOptions).map(o => o.value);
+const esc = (v) => String(v ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+
+function authHeaders() {
+  return {"X-User-Id": byId("userId").value.trim()};
+}
+
+async function loadSelectors() {
+  const status = byId("status");
+  status.textContent = "Loading products and codes...";
+  const [productsRes, codesRes] = await Promise.all([
+    fetch("/products", {headers: authHeaders()}),
+    fetch("/codes", {headers: authHeaders()})
+  ]);
+  if (!productsRes.ok || !codesRes.ok) {
+    status.innerHTML = `<span class="error">Failed to load selectors (${productsRes.status}/${codesRes.status}). Check X-User-Id.</span>`;
+    return;
+  }
+  const products = await productsRes.json();
+  const codes = await codesRes.json();
+  byId("productSelect").innerHTML = products.map(p => `<option value="${esc(p.key)}">${esc(p.key)} — ${esc(p.name)}</option>`).join("");
+  byId("codeSelect").innerHTML = codes.map(c => `<option value="${esc(c.key)}">${esc(c.key)}</option>`).join("");
+  status.textContent = `Loaded ${products.length} products and ${codes.length} codes.`;
+}
+
+async function resolveAll() {
+  const productKeys = selectedValues("productSelect");
+  const selectedCodes = selectedValues("codeSelect");
+  const branch = byId("branch").value.trim();
+  const baseline = byId("baseline").value.trim();
+  const status = byId("status");
+  const results = byId("results");
+
+  if (!productKeys.length) {
+    status.innerHTML = '<span class="error">Select at least one product.</span>';
+    return;
+  }
+  if (!baseline && !branch) {
+    status.innerHTML = '<span class="error">Provide branch or baseline.</span>';
+    return;
+  }
+
+  status.textContent = "Resolving...";
+  results.innerHTML = "";
+
+  const responses = await Promise.all(productKeys.map(async (productKey) => {
+    const query = baseline ? `baseline=${encodeURIComponent(baseline)}` : `branch=${encodeURIComponent(branch)}`;
+    const r = await fetch(`/products/${encodeURIComponent(productKey)}/resolve?${query}`, {
+      method: "POST",
+      headers: {...authHeaders(), "Content-Type": "application/json"},
+      body: JSON.stringify({selectedCodes})
+    });
+    const body = await r.json().catch(() => ({}));
+    return {productKey, ok: r.ok, status: r.status, body};
+  }));
+
+  for (const item of responses) {
+    const card = document.createElement("div");
+    card.className = "result-card";
+    if (!item.ok) {
+      card.innerHTML = `<h3>${esc(item.productKey)}</h3><div class="error">HTTP ${item.status}: ${esc(item.body.detail || "Request failed")}</div>`;
+      results.appendChild(card);
+      continue;
+    }
+    const usages = item.body.usages || [];
+    const rows = usages.map(u => `<tr><td>${esc(u.orgNodeKey)}</td><td>${esc(u.partKey)}</td><td><code>${esc(u.conditionExpr || "")}</code></td><td><code>${esc(u.pcssExpr)}</code></td></tr>`).join("");
+    card.innerHTML = `
+      <h3>${esc(item.body.productKey)}</h3>
+      <div>Resolved codes: <code>${esc((item.body.resolvedCodes || []).join(", "))}</code></div>
+      <div>Usages: ${usages.length}</div>
+      <table>
+        <thead><tr><th>Org node</th><th>Part</th><th>Condition</th><th>PCSS</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4">No visible usages</td></tr>'}</tbody>
+      </table>
+    `;
+    results.appendChild(card);
+  }
+  status.textContent = `Resolved ${responses.length} product(s).`;
+}
+
+byId("loadBtn").addEventListener("click", loadSelectors);
+byId("resolveBtn").addEventListener("click", resolveAll);
+loadSelectors();
+</script>
+</body>
+</html>
+"""
 
 
 def now():
@@ -927,4 +1087,3 @@ def startup():
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_initial_data(db)
-
